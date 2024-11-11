@@ -1,0 +1,17 @@
+1. πName(σ(Quarter='WiSe 2020') (STUDENT ⨝ ENROLL))
+
+2. πBook_Title(σ(Author='Neumann' ∨ Author='Blum')(BOOK) ⨝ (BOOK_RECOMMENDATION) ⨝ (σ(Dept='Informatik') (COURSE)))
+
+3. πName(σ(Major='Medieninformatik')(STUDENT) ⨝ (σ(Dept='Informatik') (COURSE) ⨝ σ(Quarter='WiSe 2020' ∧ Grade>60 ∧ Grade<80) (ENROLL)))
+
+4. student=((σ(Quarter='WiSe 2020')(ENROLL) ⨝ (STUDENT)) ⨝ (COURSE))
+γCOURSE.Cname; AVG(Grade) → Grade(student)
+
+
+5. book=((BOOK) ⨝ (BOOK_RECOMMENDATION) ⨝ (COURSE))
+res1=(πCourseId,Cname,Dept(σ(Dept='Medien' ∨ Book_Title='Workshop Javascript') (book)))
+(res1) ∪ (σ(Dept='Medien') (COURSE))
+
+6. student=(γName;AVG(Grade) → average(ENROLL ⨝ STUDENT)) 
+(γ;MAX(average) → average(student) ⨝ student) ∪
+(γ;MIN(average) → average(student) ⨝ student)
