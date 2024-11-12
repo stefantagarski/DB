@@ -15,3 +15,10 @@ res1=(πCourseId,Cname,Dept(σ(Dept='Medien' ∨ Book_Title='Workshop Javascript
 6. student=(γName;AVG(Grade) → average(ENROLL ⨝ STUDENT)) 
 (γ;MAX(average) → average(student) ⨝ student) ∪
 (γ;MIN(average) → average(student) ⨝ student)
+
+7. πSSN,Name,Major,Bdate((σMajor='Medieninformatik'(STUDENT))⨝(σDept='Medien' ∨ Dept='Design'(ENROLL⨝(COURSE))))
+
+8. medien=πSSN((σDept='Medien'(COURSE ⨝ ENROLL)))
+infor=πSSN((σDept='Informatik'(COURSE ⨝ ENROLL)))
+only_infor=infor-medien
+only_infor
