@@ -1,0 +1,12 @@
+1. πTitle(σ(Name='Sci-Fi')((Movies) ⨝ (Genres)))
+
+2. pom=(Persons) ⨝ (PersonsMovies ⨝ σ(Budget>200000000 ∨ Runtime>150)(Movies))
+πFirstname,Lastname(pom)
+
+3. πTitle((σ(Runtime<120 ∨ Runtime>180)(Movies)) ⨝((σFirstname='James' ∧ Lastname='Cameron'(Persons)) ⨝ (PersonsMovies)))
+
+4. σ(SequelOf>0 ∨ Name='Action') (Movies ⨝ Genres)
+
+5. σ(SequelOf>0 ∧ Name='Action') (Movies ⨝ Genres)
+
+6. σ(SequelOf=null) (Movies)
