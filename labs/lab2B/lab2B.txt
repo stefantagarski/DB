@@ -22,3 +22,8 @@ res1=(πCourseId,Cname,Dept(σ(Dept='Medien' ∨ Book_Title='Workshop Javascript
 infor=πSSN((σDept='Informatik'(COURSE ⨝ ENROLL)))
 only_infor=infor-medien
 only_infor
+ 
+9. πSSN,Name,Bdate((σ(Major='Medientechnik') (STUDENT)) ⨝ (σ(Dept='Design')(COURSE⨝ENROLL)))
+
+10. infor=σ(Dept='Informatik')(ENROLL⨝COURSE⨝STUDENT)
+πSSN,Name((ENROLL⨝COURSE⨝STUDENT) - (infor))
