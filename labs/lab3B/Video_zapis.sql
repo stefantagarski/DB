@@ -1,4 +1,4 @@
---Video_zapis(naslov, jazik, vremetraenje, datum_d, datum_p)
+--Video_zapis(naslov, jazik, vremetraenje, datum_d, datum_p) 
 
 CREATE TABLE Video_zapis(
     naslov INT PRIMARY KEY,
