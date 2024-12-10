@@ -1,0 +1,61 @@
+CREATE TABLE Korisnik(
+    k_ime INT PRIMARY KEY,
+    ime VARCHAR(50),
+    prezime VARCHAR(50),
+    tip VARCHAR(50),
+    pretplata VARCHAR(50),
+    datum_reg DATE,
+    tel_broj VARCHAR(12),
+    email VARCHAR(50),
+    CONSTRAINT datumRegistracijaKorisnik CHECK ((datum_reg >= '2023-01-01' AND datum_reg <= '2024-12-31'))
+);
+CREATE TABLE Premium_korisnik(
+    k_ime INT PRIMARY KEY,
+    datum DATE,
+    procent_popust DECIMAL DEFAULT 20,
+    CONSTRAINT Pkorisnik_FK FOREIGN KEY (k_ime) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE Profil(
+    k_ime INT,
+     ime INT,
+    datum DATE,
+    CONSTRAINT Profil_FK FOREIGN KEY (k_ime) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT Profil_PK PRIMARY KEY (k_ime , ime)
+);
+CREATE TABLE Video_zapis(
+    naslov INT PRIMARY KEY,
+    jazik VARCHAR(50) DEFAULT 'English',
+    vremetraenje INT,
+    datum_d DATE,
+    datum_p DATE,
+    CONSTRAINT videoDatum CHECK (datum_d >= datum_p)
+);
+CREATE TABLE Video_zapis_zanr(
+    naslov INT,
+    zanr INT,
+    CONSTRAINT videoZapisZanr_PK PRIMARY KEY (naslov, zanr),
+    CONSTRAINT videoZapisZanr_FK FOREIGN KEY (naslov) REFERENCES Video_zapis(naslov) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE Lista_zelbi(
+    naslov INT,
+    k_ime INT,
+    ime INT,
+    CONSTRAINT ListaZelbi_FK FOREIGN KEY (k_ime, ime) REFERENCES Profil(k_ime, ime) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT ListaZelbi_PK PRIMARY KEY (naslov, k_ime, ime),
+    CONSTRAINT ListaZelbi_FK1 FOREIGN KEY (naslov) REFERENCES Video_zapis(naslov) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE Preporaka(
+ID INT PRIMARY KEY,
+k_ime_od INT,
+k_ime_na INT,
+naslov INT DEFAULT 'Deleted',
+datum DATE,
+komentar VARCHAR(250) NOT NULL,
+ocena INT,
+CONSTRAINT datumNaPreporaki CHECK (datum > '2022-12-07'), 
+CONSTRAINT ocenkaVrednosti CHECK (ocena IN (1, 2, 3, 4, 5)),
+FOREIGN KEY (k_ime_od) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (k_ime_na) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (naslov) REFERENCES Video_zapis(naslov) ON DELETE SET DEFAULT ON UPDATE CASCADE
+);
+-- 
