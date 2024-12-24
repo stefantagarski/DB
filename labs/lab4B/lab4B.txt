@@ -1,0 +1,116 @@
+--Да се вратат имињата и презимињата на сите премиум корисници кои препорачале видео запис со времетраење подолго од 2 часа и за кој оставиле оцена поголема или еднаква на 4, подредени според датумот на регистрација во растечки редослед (времетраењето се чува во минути)
+
+SELECT DISTINCT k.ime, k.prezime
+
+FROM Korisnik k
+
+JOIN Premium_korisnik pk ON k.k_ime = pk.k_ime
+
+JOIN Preporaka p ON k.k_ime = p.k_ime_od
+
+JOIN Video_zapis vz ON p.naslov = vz.naslov
+
+WHERE vz.vremetraenje > 120 AND p.ocena >= 4
+
+ORDER BY k.datum_reg ASC;
+
+
+--Да се вратат корисничкото име и бројот на видео записи кои му биле препорачани на корисникот кој дал најголем број на препораки.
+
+SELECT p.k_ime_na as k_ime , count(k_ime_na) dobieni_preporaki
+FROM Preporaka p
+GROUP by p.k_ime_na
+LIMIT 1
+
+
+--За секој профил да се врати името на профилот и просечната оцена на видео записите во листата на желби асоцирана со тој профил. (Просечната оцена на секој видео запис се пресметува од сите оцени за тој видео запис).
+
+SELECT p.ime, AVG(total) AS po_profil
+FROM Profil p
+JOIN Lista_zelbi lz ON p.k_ime = lz.k_ime AND p.ime = lz.ime
+JOIN (
+SELECT naslov, AVG(ocena) AS total
+FROM Preporaka
+GROUP BY naslov
+) avgPrep
+ON avgPrep.naslov = lz.naslov
+GROUP BY p.ime;
+
+
+
+--Да се вратат жанровите заедно со бројот на препораки со коментар што го содржи зборот „interesting“, подредени според бројот на препораки во опаѓачки ред.
+
+
+SELECT vz.zanr, COUNT(*) AS broj_zanrovi
+
+FROM Video_zapis_zanr vz
+
+JOIN Preporaka p ON vz.naslov = p.naslov
+
+WHERE p.komentar LIKE '%interesting%'
+
+GROUP BY vz.zanr
+
+ORDER BY broj_zanrovi DESC;
+
+
+--Да се врати список со насловите на видеата, времетраењето и бројот на препораки, за видеа кои се во листата на желби на најмалку два различни профили.
+
+
+WITH PomalkuOdDva as (
+  SELECT naslov
+from Lista_zelbi
+  GROUP by naslov
+  HAVING COUNT(DISTINCT ime) > 1
+)
+
+SELECT vz.naslov, vz.vremetraenje, COUNT(p.ID) AS broj_preporaki
+
+FROM Video_zapis vz
+
+JOIN PomalkuOdDva pod ON vz.naslov = pod.naslov left join Preporaka p on vz.naslov=p.naslov
+
+GROUP BY vz.naslov
+
+
+--Да се вратат имињата на сите корисници кои имаат дадено препораки за видеа кои никој од нивните профили не ги има во листата на желби.
+
+SELECT DISTINCT k_ime_od
+
+FROM Korisnik k
+
+JOIN Preporaka p ON k.k_ime = p.k_ime_od
+
+WHERE p.naslov NOT IN (
+
+    SELECT lz.naslov
+
+    FROM Lista_zelbi lz
+
+    WHERE lz.k_ime = k.k_ime
+);
+
+--За секој од премиум корисниците со најголем процент на попуст да се врати профилот со најмал број видео записи во листата на желби.
+
+WITH MaxDiscount AS (
+SELECT pk.k_ime, pk.procent_popust
+FROM Premium_korisnik pk
+WHERE pk.procent_popust = (SELECT MAX(procent_popust) FROM Premium_korisnik)
+),
+WishListCount AS (
+SELECT p.k_ime, p.ime AS profile_name,
+COUNT(lz.naslov) AS video_count
+FROM Profil p
+LEFT JOIN Lista_zelbi lz ON p.k_ime = lz.k_ime AND p.ime = lz.ime
+GROUP BY p.k_ime, p.ime
+),
+MinWishList AS (
+SELECT wl.k_ime, MIN(wl.video_count) AS min_count
+FROM WishListCount wl
+GROUP BY wl.k_ime
+)
+SELECT md.k_ime , wl.profile_name as ime, wl.video_count as br_filmovi
+FROM MaxDiscount md
+JOIN WishListCount wl ON md.k_ime = wl.k_ime
+JOIN MinWishList mw ON wl.k_ime = mw.k_ime AND wl.video_count = mw.min_count;
+
