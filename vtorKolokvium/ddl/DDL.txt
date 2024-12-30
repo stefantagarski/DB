@@ -1,0 +1,280 @@
+DDL
+
+
+1.
+create table Vraboten(
+ID text primary key,
+ime varchar(200),
+prezime varchar(200),
+datum_r date,
+datum_v date,
+obrazovanie varchar(200),
+plata int,
+constraint checkDate check (datum_r < datum_v)
+);
+
+create table Shalterski_rabotnik(
+ID text primary key,
+foreign key (ID) references Vraboten(ID) on delete cascade on update cascade
+);
+
+create table Transakcija_shalter(
+ID text primary key,
+ID_v text,
+MBR_k text,
+MBR_k_s text,
+broj text,
+datum text,
+suma int ,
+tip varchar(100),
+foreign key (ID_v) references Shalterski_rabotnik(ID) on delete set null on update cascade,
+foreign key (MBR_k) references Klient(MBR_k) on delete cascade on update cascade,
+foreign key (MBR_k_s, broj) references Smetka(MBR_k_s, broj) on delete cascade on update cascade,
+constraint tipCheck check (tip in ('uplata', 'isplata')),
+constraint dataCheck check (not(datum >= '2020-12-30' and datum <= '2021-01-14'))
+);
+
+
+
+
+
+2. 
+
+create table Vakcinacija(
+id_lice int,
+id_med_lice int,
+shifra_vakcina int,
+primary key (id_lice, id_med_lice, shifra_vakcina),
+foreign key (id_lice) references Lice(id) on delete set default on update cascade,
+foreign key (id_med_lice) references Med_lice(id) on delete set default on update cascade,
+foreign key (shifra_vakcina) references Vakcina(shifra) on delete set default on update cascade,
+constraint checkMed check (id_lice <> id_med_lice)
+);
+
+create table Test(
+id int,
+shifra int,
+tip varchar(100),
+datum date,
+rezultat varchar(100),
+laboratorija varchar(100),
+primary key (id, shifra),
+foreign key (id) references Lice(id) on delete cascade on update cascade,
+constraint checkLab check (tip='seroloshki' or laboratorija <> 'lab-abc')
+);
+
+
+create table Vakcinacija_datum(
+id_lice int ,
+id_med_lice int,
+shifra_vakcina int,
+datum date,
+primary key (id_lice, id_med_lice, shifra_vakcina, datum),
+foreign key (id_lice, id_med_lice, shifra_vakcina) references Vakcinacija (id_lice, id_med_lice, shifra_vakcina) on delete set null on update cascade
+);
+
+
+
+
+3.
+
+create table Bend(
+id text primary key,
+ime varchar(100),
+godina_osnovanje int,
+constraint godCheck check (godina_osnovanje >= 1970)
+);
+
+
+create table Bend_zanr(
+id_bend text, 
+zanr text,
+primary key (id_bend, zanr)
+foreign key (id_bend) references Bend(id) on delete cascade on update cascade
+
+);
+
+create table Festival_bend(
+id_festival text,
+datum_od text,
+id_bend text,
+primary key (id_festival, datum_od, id_bend),
+foreign key (id_festival, datum_od) references Festival_odrzuvanje(id, datum_od) on delete cascade on update cascade,
+foreign key (id_bend) references Bend(id) on delete set default on update cascade,
+constraint checkBend check (not (id_bend = '5' and  id_festival = '2'))
+);
+
+
+
+4.
+
+create table Korisnik(
+kor_ime text primary key,
+ime varchar(100),
+prezime varchar(100),
+pol varchar(100),
+data_rag varchar(100),
+data_reg varchar(100)
+);
+
+create table Korisnik_email(
+kor_ime text,
+email text,
+primary key (kor_ime, email),
+foreign key (kor_ime) references Korisnik(kor_ime) on delete cascade on update cascade,
+constraint emailCheck check (email like '%_______.com')
+);
+
+create table Poseta(
+id text primary key,
+kor_ime text, 
+id_mesto text, 
+datum varchar(200),
+foreign key (kor_ime) references Korisnik(kor_ime) on delete set null on update cascade,
+foreign key (id_mesto) references Mesto(id) on delete cascade on update cascade,
+constraint datumCheck check(datum < DATE())
+);
+
+
+
+
+5.
+
+
+create table Video_zapis(
+naslov text primary key,
+jazik varchar(20),
+vremetraenje int,
+datum_d date,
+datum_p date
+);
+
+create table Video_zapis_zanr(
+naslov text,
+zanr text,
+primary key (naslov, zanr),
+foreign key (naslov) references Video_zapis(naslov) on delete cascade on update cascade
+);
+
+create table Preporaka(
+ID text primary key,
+k_ime_od text,
+k_ime_na text,
+naslov text,
+datum date,
+komentar varchar(100),
+ocena int,
+foreign key (naslov) references Video_zapis(naslov) on delete cascade on update cascade,
+foreign key (k_ime_od) references Korisnik(k_ime) on delete set null on update cascade,
+foreign key (k_ime_na) references Korisnik(k_ime) on delete cascade on update cascade,
+constraint datumCheck check (datum < '2024-12-30'),
+constraint userCheck check (k_ime_od <> k_ime_na)
+
+);
+
+
+
+6.
+
+create table Korisnik(
+k_ime text primary key,
+ime varchar(100),
+prezime varchar(100),
+tip varchar(100),
+pretplata varchar(100),
+datum_reg date,
+tel_broj varchar(100),
+email varchar(100),
+constraint checkUser check (not (datum_reg <= '2015-01-01' and pretplata='pretplata 3'))
+);
+
+create table Premium_korisnik(
+k_ime text primary key, 
+datum date,  
+procent_popust int default 10,
+foreign key (k_ime) references Korisnik(k_ime) on delete cascade on update cascade
+);
+
+create table Lista_zelbi(
+ID text primary key,
+naslov text,
+k_ime text,
+ime text,
+foreign key (naslov) references Video_zapis(naslov) on delete set null on update cascade,
+foreign key (k_ime,ime) references Profil(k_ime, ime) on delete cascade on update cascade
+);
+
+
+7.
+
+(ista so lab3B)
+
+CREATE TABLE Korisnik(
+    k_ime INT PRIMARY KEY,
+    ime VARCHAR(50),
+    prezime VARCHAR(50),
+    tip VARCHAR(50),
+    pretplata VARCHAR(50),
+    datum_reg DATE,
+    tel_broj VARCHAR(12),
+    email VARCHAR(50),
+    CONSTRAINT datumRegistracijaKorisnik CHECK ((datum_reg >= '2023-01-01' AND datum_reg <= '2024-12-31'))
+);
+CREATE TABLE Premium_korisnik(
+    k_ime INT PRIMARY KEY,
+    datum DATE,
+    procent_popust DECIMAL DEFAULT 20,
+    CONSTRAINT Pkorisnik_FK FOREIGN KEY (k_ime) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE Profil(
+    k_ime INT,
+     ime INT,
+    datum DATE,
+    CONSTRAINT Profil_FK FOREIGN KEY (k_ime) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT Profil_PK PRIMARY KEY (k_ime , ime)
+);
+CREATE TABLE Video_zapis(
+    naslov INT PRIMARY KEY,
+    jazik VARCHAR(50) DEFAULT 'English',
+    vremetraenje INT,
+    datum_d DATE,
+    datum_p DATE,
+    CONSTRAINT videoDatum CHECK (datum_d >= datum_p)
+);
+CREATE TABLE Video_zapis_zanr(
+    naslov INT,
+    zanr INT,
+    CONSTRAINT videoZapisZanr_PK PRIMARY KEY (naslov, zanr),
+    CONSTRAINT videoZapisZanr_FK FOREIGN KEY (naslov) REFERENCES Video_zapis(naslov) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE Lista_zelbi(
+    naslov INT,
+    k_ime INT,
+    ime INT,
+    CONSTRAINT ListaZelbi_FK FOREIGN KEY (k_ime, ime) REFERENCES Profil(k_ime, ime) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT ListaZelbi_PK PRIMARY KEY (naslov, k_ime, ime),
+    CONSTRAINT ListaZelbi_FK1 FOREIGN KEY (naslov) REFERENCES Video_zapis(naslov) ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE Preporaka(
+ID INT PRIMARY KEY,
+k_ime_od INT,
+k_ime_na INT,
+naslov INT DEFAULT 'Deleted',
+datum DATE,
+komentar VARCHAR(250) NOT NULL,
+ocena INT,
+CONSTRAINT datumNaPreporaki CHECK (datum > '2022-12-07'), 
+CONSTRAINT ocenkaVrednosti CHECK (ocena IN (1, 2, 3, 4, 5)),
+FOREIGN KEY (k_ime_od) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (k_ime_na) REFERENCES Korisnik(k_ime) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (naslov) REFERENCES Video_zapis(naslov) ON DELETE SET DEFAULT ON UPDATE CASCADE
+);
+
+
+8. 
+
+(ista so lab3A)
+
+
+
+
