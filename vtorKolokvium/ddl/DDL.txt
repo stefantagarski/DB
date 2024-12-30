@@ -275,6 +275,75 @@ FOREIGN KEY (naslov) REFERENCES Video_zapis(naslov) ON DELETE SET DEFAULT ON UPD
 
 (ista so lab3A)
 
+CREATE TABLE Vraboten (
+    ID INT PRIMARY KEY,
+    ime VARCHAR(50),
+    prezime VARCHAR(50),
+    datum_r DATE,
+    datum_v DATE,
+    obrazovanie VARCHAR(50),
+    plata INT,
+    CONSTRAINT stepenObrazovanie CHECK (obrazovanie IN ('PhD','MSc','High School','BSc')),
+    CONSTRAINT datumRaganje CHECK (datum_r < datum_v)
+);
+
+CREATE TABLE Klient (
+    MBR_k INT PRIMARY KEY,
+    ime VARCHAR(50),
+    prezime VARCHAR(50),
+    adresa VARCHAR(50) DEFAULT 'Ne e navedena',
+    datum DATE
+);
+
+CREATE TABLE Shalterski_rabotnik(
+    ID INT PRIMARY KEY,
+    FOREIGN KEY (ID) REFERENCES Vraboten(ID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE Bankomat (
+    ID INT PRIMARY KEY,
+    lokacija VARCHAR(50) UNIQUE,
+    datum DATE,
+    zaliha INT,
+    CONSTRAINT zalihaBankomat CHECK (zaliha >= 0)
+);
+
+CREATE TABLE Smetka(
+    MBR_k INT,
+    broj INT,
+    valuta INT,
+    saldo INT,
+    PRIMARY KEY (MBR_k, broj),
+    FOREIGN KEY (MBR_k) REFERENCES Klient(MBR_k) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE Transakcija_bankomat(
+    ID INT PRIMARY KEY,
+    MBR_k_s INT ,
+    broj INT,
+    ID_b INT DEFAULT -1,
+    datum DATE,
+    suma INT,
+    CONSTRAINT TransBank_FK FOREIGN KEY (ID_b) REFERENCES Bankomat(ID) ON DELETE set default ON UPDATE CASCADE,
+    CONSTRAINT datum_Izvrsuvanje1 CHECK (NOT (datum >= '2020-12-30' AND datum <= '2021-10-14')),
+    FOREIGN KEY (MBR_k_s, broj) REFERENCES Smetka(MBR_k, broj) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE Transakcija_shalter(
+    ID INT PRIMARY KEY,
+    ID_v INT,
+    MBR_k INT,
+    MBR_k_s INT,
+    broj INT,
+    datum DATE,
+    suma INT,
+    tip VARCHAR(50),
+    FOREIGN KEY (ID_v) REFERENCES Shalterski_rabotnik(ID) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (MBR_k) REFERENCES Klient(MBR_k) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (MBR_k_s, broj) REFERENCES Smetka(MBR_k, broj) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT datum_Izvrsuvanje CHECK (NOT (datum >= '2020-12-30' AND datum <= '2021-10-14')),
+    CONSTRAINT tip_Transakcija CHECK (tip IN ('uplata', 'isplata'))
+);
 
 
 
