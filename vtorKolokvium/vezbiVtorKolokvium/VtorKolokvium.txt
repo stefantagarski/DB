@@ -1,0 +1,114 @@
+VtorKolokvium zadaci
+
+1.Да се напишат соодветните DDL изрази за ентитетните множества „МУЗЕЈ“, „УМЕТНИЧКО_ДЕЛО“ и „ИЗЛОЖЕНИ“, како и за евентуалните релации кои произлегуваат од истите, доколку треба да бидат исполнети следните барања:
+
+    Не сакаме да водиме информации за делата кои биле изложени на изложби кои се избришани од системот.
+
+    Типот на музејот може да има една од двете вредности, „otvoreno“ или „zatvoreno“.
+
+    Шифрата на музеите на отворено секогаш почнува со „о“.
+
+
+ create table Muzej(
+shifra text primary key,
+ime_muzej varchar(200),
+opis varchar(200),
+grad varchar(200),
+tip varchar(200), 
+rabotno_vreme varchar(200),
+constraint check_tip check(tip in ('zatvoreno', 'otvoreno')),
+constraint check_sifra check(shifra like 'o%' or tip='zatvoreno')
+);
+
+create table Umetnicko_delo(
+shifra text primary key,
+ime varchar(200),
+godina int, 
+umetnik varchar(200)
+);
+
+create table Izlozeni(
+shifra_d text,
+ime_i text,
+datum_pocetok date, 
+datum_kraj date,
+primary key (shifra_d, ime_i)
+foreign key (shifra_d) references Umetnicko_delo(shifra) on delete cascade on update cascade,
+foreign key (ime_i) references Izlozba_UD(ime_i) on delete cascade on update cascade
+);
+
+
+2.Да се напише DML израз со кој ќе се вратат имињата на уметничките дела заедно со нивните креатори (уметници) кои биле изложени на барем една изложба во целото времетраење на истата подредени според името на уметничкото дело. 
+
+
+select ud.ime, umetnik
+from Umetnicko_delo ud join Izlozeni  iz on ud.shifra=iz.shifra_d  join Izlozba izl on iz.ime_i=izl.ime_i
+where izl.datum_od=iz.datum_pocetok and izl.datum_do=iz.datum_kraj
+order by ud.ime
+
+
+
+3.Да се напише DML израз со кој ќе се вратат сите уметници кои немале ниту едно уметничко дело изложено во музеј на затворено подредени според името на уметникот. 
+
+select umetnik 
+from Umetnicko_delo 
+where umetnik not in (select umetnik 
+                from Umetnicko_delo ud join Izlozeni  iz on ud.shifra=iz.shifra_d 
+                join Izlozba izl on iz.ime_i=izl.ime_i
+                join Muzej m on izl.shifra_muzej=m.shifra
+                where m.tip='zatvoreno')
+            
+order by umetnik    
+
+
+
+4. Да се напише DML израз со кој ќе се врати името на музејот кој имал најмногу изложени различни уметнички дела во 2023 година (уметничките дела кај кои почетниот датум на изложување на некоја изложба на уметнички дела е во 2023 година). 
+
+
+with brIzlozeni as(
+select ime_muzej, count(distinct iz.shifra_d) brojac
+from Izlozeni iz join Izlozba izl on iz.ime_i=izl.ime_i join Muzej m on izl.shifra_muzej=m.shifra
+where iz.datum_pocetok >= '2023-01-01'
+group by ime_muzej),
+ 
+maxCount as (
+select ime_muzej, max(brojac) maks
+from brIzlozeni
+)
+
+select ime_muzej
+from maxCount
+
+
+5.За секое уметничко дело се чуваат изведените атрибути „br_izlozbi_otvoreno“ и „br_izlozbi_zatvoreno“ кои го означуваат бројот на изложби одржани во музеи на отворено и бројот на изложби одржани во музеи на затворено на кои било изложено делото.
+
+Да се напише/ат соодветниот/те тригер/и за одржување на конзистентноста на атрибутите „br_izlozbi_otvoreno“ и „br_izlozbi_zatvoreno“ при додавање на записите од кои зависи нивната вредност.
+
+
+
+create trigger otvoreno
+after insert on Izlozeni
+for each row
+begin 
+update Umetnicko_delo
+set br_izlozbi_otvoreno = br_izlozbi_otvoreno + 1
+where new.shifra_d=shifra and new.ime_i in (select ime_i
+                                            from Muzej m join Izlozba iz on m.shifra=iz.shifra_muzej
+                                            where m.tip='otvoreno');
+
+end;
+
+create trigger zatvoreno
+after insert on Izlozeni
+for each row
+begin 
+update Umetnicko_delo
+set br_izlozbi_zatvoreno = br_izlozbi_zatvoreno + 1
+where shifra=new.shifra_d and new.ime_i in (select ime_i
+                                            from Muzej m join Izlozba iz on m.shifra=iz.shifra_muzej
+                                            where m.tip='zatvoreno');
+
+end;
+
+
+
