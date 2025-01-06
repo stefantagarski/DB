@@ -1,0 +1,110 @@
+Релационата база е дефинирана преку следните релации: 
+
+Pateka(ime, grad, drzava, dolzina, tip)
+
+Trka(ime, krugovi, pateka*)
+
+Odrzana_trka(ime*, datum, vreme)
+
+Vozac(vozacki_broj, ime, prezime, nacionalnost, datum_r)
+
+Tim(ime, direktor)
+
+Sponzori(ime*, sponzor)
+
+Vozi_za(vozacki_broj*, ime_tim*, datum_pocetok, datum_kraj)
+
+Ucestvuva(ID, vozacki_broj*, ime_tim*, ime_trka*, datum_trka*, pocetna_p, krajna_p, poeni)
+
+
+1. Да се напишат соодветните DDL изрази за ентитетните множества „TРКА“, „ОДРЖАНА_ТРКА“ и „УЧЕСТВУВА“, како и за евентуалните релации кои произлегуваат од истите, доколку треба да бидат исполнети следните барања:
+
+    Сакаме да водиме евиденција за учествата на трки од возачи кои се избришани од системот, но не сакаме да водиме евиденција за учествата на трки од тимови кои се избришани од системот.
+    Само возачите кои ја завршиле трката на првите 10 позиции добиваат поени (останатите добиваат 0 поени). 
+    Трката не смее да има повеќе од 80 кругови.
+
+
+create table Trka(
+ime text primary key,
+krugovi int,
+pateka text,
+foreign key (pateka) references Pateka(ime) on delete cascade on update cascade,
+constraint checkKrugovi check (krugovi <= 80)
+);
+
+create table Odrzana_trka(
+ime text ,
+datum text,
+vreme int,
+primary key (ime,datum),
+foreign key (ime) references Trka(ime) on delete cascade on update cascade
+);
+
+create table Ucestvuva(
+ID text primary key,
+vozacki_broj text,
+ime_tim text,
+ime_trka text,
+datum_trka text,
+pocetna_p text,
+krajna_p text,
+poeni double,
+foreign key (vozacki_broj) references Vozac(vozacki_broj) on delete set null on update cascade
+foreign key (ime_tim) references Tim(ime) on delete cascade on update cascade,
+foreign key (ime_trka,datum_trka) references Odrzana_trka (ime,datum) on delete cascade on update cascade,
+constraint pozicija check (krajna_p in (1,2,3,4,5,6,7,8,9,10))
+);
+
+
+2.Да се напише DML израз со кој ќе се вратат информациите за возачите кои во 2023 година освоиле (еден или повеќе) поени на одржани трки со помалку од 70 кругови подредени според датумот на раѓање по опаѓачки редослед.
+
+
+select  distinct v.vozacki_broj , v.ime, v.prezime,v.nacionalnost, v.datum_r
+from Ucestvuva u join Vozac v on u.vozacki_broj=v.vozacki_broj join Trka t on u.ime_trka=t.ime
+where u.datum_trka like '2023%' and t.krugovi < 70 and u.poeni >= 1
+order by v.datum_r desc
+
+
+
+3.Да се напише DML израз со кој за секоја трка ќе се врати возачот кој има најмногу победи на таа трка.
+
+
+
+with countPobedi as (
+select ime,vozacki_broj, count(*) brojac
+from Ucestvuva u join Odrzana_trka o on u.ime_trka=o.ime
+where krajna_p=1
+group by ime,vozacki_broj
+),
+maksPobedi as (
+select ime,max(brojac) maks
+from countPobedi
+group by ime
+)
+
+select cp.ime race, cp.vozacki_broj driver
+from countPobedi cp join maksPobedi m on cp.ime=m.ime and cp.brojac=m.maks
+
+
+
+4.Да се напише/ат соодветниот/те тригер/и за одржување на референцијалниот интегритет на релацијата „УЧЕСТВУВА“ доколку треба да се исполнети следните барања:
+
+    Сакаме да водиме евиденција за учествата на трки од возачи кои се избришани од системот.
+    Не сакаме да водиме евиденција за учествата на трки од тимови кои се избришани од системот.
+
+create trigger izbrisiVozac
+after delete on Vozac
+for each row
+begin 
+update Ucestuva
+set vozacki_broj= null
+where vozacki_broj=old.vozacki_broj
+end;
+
+create trigger izbrisiTim
+after delete on Tim
+for each row
+begin
+delete from Ucestvuva
+where old.ime=ime_tim
+end;
