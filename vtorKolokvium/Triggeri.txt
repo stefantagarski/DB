@@ -1,0 +1,116 @@
+Triggers
+
+
+1. За секој музичар се чува изведен атрибут „br_bendovi“ кој го означува бројот на бендови во кои свири тој музичар.
+
+Да се напише/ат соодветниот/те тригер/и за одржување на конзистентноста на атрибутот „br_bendovi“ при зачленување во бенд.
+
+create trigger update_br_bendovi_after_insert
+after insert on Muzicar_bend
+for each row
+begin
+update Muzicar
+set br_bendovi = COALESCE(br_bendovi, 0) + 1
+where id=new.id_muzicar;
+end;
+
+
+2.За секој видео запис се чува изведен атрибут „prosechna_ocena“ кој ја означува просечната оцена добиена од препораки. Дополнително, пресметана е моменталната вредност на овој атрибут за секој видео запис.
+
+Да се напише/ат соодветниот/те тригер/и за одржување на конзистентноста на атрибутот „prosechna_ocena“ при додавање на записите од кои зависи неговата вредност.
+
+create trigger prosecnaCena
+after insert on Preporaka
+for each row
+begin
+update Video_zapis
+set prosechna_ocena = (select avg(ocena)
+                        from Preporaka p
+                        where new.naslov=p.naslov
+                        )
+where new.naslov=naslov;
+end;
+
+
+3. Во табелата Lice е креиран изведен атрибут „celosno_imuniziran“ кој прима вредности 0 и 1 и кажува дали лицето е целосно имунизирано (вакцинирано со барем две дози вакцина). Дополнително, пресметана е моменталната вредност на овој атрибут за секое лице.
+
+Да се напише/ат тригер/и за одржување на вредноста на атрибутот „celosno_imuniziran“ при додавање на записите од кои зависи неговата вредност.
+
+create trigger Imunizirani 
+after insert on Vakcinacija_datum
+for each row
+begin
+    update Lice
+    set celosno_imuniziran = 1
+    where id=new.id_lice and (
+            select count(*)
+            from Vakcinacija_datum v 
+            where v.id_lice=new.id_lice
+            ) >= 2;
+end;
+
+
+4. //////////////
+
+
+
+
+5. Да се напише/ат соодветниот/те тригер/и за одржување на референцијалниот интегритет на релациите „СОСЕДИ“ и „ПОСЕТА“ доколку треба да се исполнети следните барања:
+
+    Сакаме да водиме евиденција за соседните градови на град кој е избришан од системот.
+    Не сакаме да водиме евиденција за посетите на места на корисници кои се избришани од системот.
+
+create trigger deleteSosedi
+after delete on Grad
+for each row
+begin
+    update Sosedi
+    set grad1=null
+    where grad1=old.id_mesto;
+    
+    update sosedi
+    set grad2 = null
+    where grad2= old.id_mesto;
+end;
+
+create trigger deletePoseti
+after delete on Korisnik
+for each row
+begin
+    delete from Poseta
+    where kor_ime=old.kor_ime;
+end;
+
+
+6.За секое место се чува изведен атрибут „broj_poseti“ кој го означува бројот на различни корисници кои го посетиле.
+
+Да се напише/ат соодветниот/те тригер/и за одржување на конзистентноста на атрибутот „broj_poseti“ при додавање на записите од кои зависи нивната вредност.
+
+create trigger brPoseti
+after insert on Poseta
+for each row
+begin
+    update Mesto
+    set broj_poseti = (select count(distinct kor_ime)
+                        from Poseta
+                        where new.id_mesto=id_mesto)
+    where new.id_mesto=id;
+end;
+
+
+7. За секој корисник се чува изведен атрибут „broj_poseti“ кој го означува бројот на различни места кои ги посетиле.
+
+Да се напише/ат соодветниот/те тригер/и за одржување на конзистентноста на атрибутот „broj_poseti“ при додавање на записите од кои зависи нивната вредност.
+
+
+create trigger brPoseti
+after insert on Poseta
+for each row
+begin
+    update Korisnik
+    set broj_poseti = (select count(distinct id_mesto)
+                        from Poseta
+                        where kor_ime=new.kor_ime)
+    where new.kor_ime=kor_ime;
+end;
+
